@@ -1,6 +1,6 @@
 <template>
     <AdminLayout>
-        <main class="p-1 md:ml-57 h-auto pt-20">
+        <main class="dark p-1 md:ml-57 h-auto pt-20">
 
                 <ProductList></ProductList>
         </main>

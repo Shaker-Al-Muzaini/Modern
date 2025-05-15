@@ -1,8 +1,136 @@
 <script setup>
-import { usePage } from '@inertiajs/vue3';
+import {usePage } from '@inertiajs/vue3';
+import { ref } from 'vue'
+import { Plus } from '@element-plus/icons-vue'
 
 const Products=usePage().props.Products;
+const isAddProduct = ref(false);
+const dialogVisible = ref(false);
+const productImages = ref([])
+const dialogImageUrl = ref('')
+const editMode=ref(false)
 
+defineProps({
+    products: Array
+})
+const handleFileChange = (file) => {
+    console.log(file)
+    productImages.value.push(file)
+}
+
+const handlePictureCardPreview = (file) => {
+    dialogImageUrl.value = file.url
+    dialogVisible.value = true
+}
+
+const handleRemove = (file) => {
+    console.log(file)
+}
+//prodct from data
+const id = ref('');
+const title = ref('')
+const price = ref('')
+const quantity = ref('')
+const description = ref('')
+const product_images = ref([])
+const published = ref('')
+const category_id = ref('')
+const brand_id = ref('')
+const inStock = ref('')
+
+
+const openEditModal = (product, index) => {
+
+    id.value = product.id;
+    title.value = product.title;
+    price.value = product.price;
+    quantity.value = product.quantity;
+    description.value = product.description;
+    brand_id.value = product.brand_id;
+    category_id.value = product.category_id;
+    product_images.value = product.product_images;
+
+    editMode.value = true;
+    isAddProduct.value = false
+    dialogVisible.value = true
+
+}
+const openAddModal = () => {
+    isAddProduct.value = true
+    dialogVisible.value = true
+    editMode.value = false;
+
+}
+
+// add product method
+const AddProduct = async () => {
+    const formData = new FormData();
+    formData.append('title', title.value);
+    formData.append('price', price.value);
+    formData.append('quantity', quantity.value);
+    formData.append('description', description.value);
+    formData.append('brand_id', brand_id.value);
+    formData.append('category_id', category_id.value);
+    // Append product images to the FormData
+    for (const image of productImages.value) {
+        formData.append('product_images[]', image.raw);
+    }
+
+    try {
+        await router.post('products/store', formData, {
+            onSuccess: page => {
+                Swal.fire({
+                    toast: true,
+                    icon: 'success',
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    title: page.props.flash.success
+                })
+                dialogVisible.value = false;
+                resetFormData();
+            },
+        })
+    } catch (err) {
+        console.log(err)
+    }
+
+
+
+}
+
+//rest data after added
+const resetFormData = () => {
+    id.value = '';
+    title.value = '';
+    price.value = '';
+    quantity.value = '';
+    description.value = '';
+    productImages.value = [];
+    dialogImageUrl.value = ''
+};
+
+
+
+//delete sigal product image
+
+const deleteImage = async (pimage, index) => {
+    try {
+        await router.delete('/admin/products/image/' + pimage.id, {
+            onSuccess: (page) => {
+                product_images.value.splice(index, 1);
+                Swal.fire({
+                    toast: true,
+                    icon: "success",
+                    position: "top-end",
+                    showConfirmButton: false,
+                    title: page.props.flash.success
+                });
+            }
+        })
+    } catch (err) {
+        console.log(err);
+    }
+}
 function getFirstWords(text, count) {
     if (!text) return '';
     return text.split(' ').slice(0, count).join(' ');
@@ -12,8 +140,75 @@ function getFirstWords(text, count) {
 
 <template>
     <section class="bg-gray-50 dark:bg-gray-900 py-3 sm:py-5">
+        <el-dialog
+            v-model="dialogVisible"
+            :title="editMode ? 'Edit product' : 'Add Product'"
+            width="50%"
+            :before-close="handleClose"
+        >
+
+<!--            forms start-->
+
+
+            <form class="max-w-md mx-auto">
+                <div class="relative z-0 w-full mb-5 group">
+                    <input
+                        type="email"
+                        name="floating_email"
+                        id="floating_email"
+                        class="block py-2.5 px-0 w-full text-sm text-black dark:text-black bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" "
+                        required
+                    />
+
+                    <label for="floating_email" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email address</label>
+                </div>
+                <div class="relative z-0 w-full mb-5 group">
+                    <input type="password" name="floating_password" id="floating_password" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
+                    <label for="floating_password" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Password</label>
+                </div>
+                <div class="relative z-0 w-full mb-5 group">
+                    <input type="password" name="repeat_password" id="floating_repeat_password" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
+                    <label for="floating_repeat_password" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Confirm password</label>
+                </div>
+                <div class="grid md:grid-cols-2 md:gap-6">
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input type="text" name="floating_first_name" id="floating_first_name" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
+                        <label for="floating_first_name" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">First name</label>
+                    </div>
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input type="text" name="floating_last_name" id="floating_last_name" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
+                        <label for="floating_last_name" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Last name</label>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 md:gap-6">
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" name="floating_phone" id="floating_phone" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
+                        <label for="floating_phone" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Phone number (123-456-7890)</label>
+                    </div>
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input type="text" name="floating_company" id="floating_company" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
+                        <label for="floating_company" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Company (Ex. Google)</label>
+                    </div>
+                </div>
+                <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Submit</button>
+            </form>
+
+
+            <!--            end  forms-->
+            <span>This is a message</span>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="dialogVisible = false">Cancel</el-button>
+                    <el-button type="primary" @click="dialogVisible = false">
+                        Confirm
+                    </el-button>
+                </div>
+            </template>
+        </el-dialog>
+
         <div class="px-4 mx-auto max-w-screen-2xl lg:px-12">
-            <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-visible">
                 <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
                     <div class="w-full md:w-1/2">
                         <form class="flex items-center">
@@ -29,7 +224,7 @@ function getFirstWords(text, count) {
                         </form>
                     </div>
                     <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                        <button type="button" class="flex items-center justify-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800">
+                        <button @click="openAddModal" type="button" class="flex items-center justify-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800">
                             <svg class="h-3.5 w-3.5 mr-2" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path clip-rule="evenodd" fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
                             </svg>
@@ -89,7 +284,7 @@ function getFirstWords(text, count) {
                         </div>
                     </div>
                 </div>
-            <div class="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-lg">
+            <div class="relative overflow-visible bg-white shadow-md dark:bg-gray-800 sm:rounded-lg">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -98,11 +293,10 @@ function getFirstWords(text, count) {
                             <th scope="col" class="px-4 py-3">Product</th>
                             <th scope="col" class="px-4 py-3">Category</th>
                             <th scope="col" class="px-4 py-3">Stock</th>
-                            <th scope="col" class="px-4 py-3">Sales/Day</th>
-                            <th scope="col" class="px-4 py-3">Sales/Month</th>
-                            <th scope="col" class="px-4 py-3">Sales</th>
-                            <th scope="col" class="px-4 py-3">Revenue</th>
-                            <th scope="col" class="px-4 py-3">Last Update</th>
+                            <th scope="col" class="px-4 py-3">Brand</th>
+                            <th scope="col" class="px-4 py-3">Quantity</th>
+                            <th scope="col" class="px-4 py-3">Price</th>
+                            <th scope="col" class="px-4 py-3">published</th>
                             <th scope="col" class="px-4 py-3">Actions</th>
 
                         </tr>
@@ -117,26 +311,26 @@ function getFirstWords(text, count) {
                                 {{ getFirstWords(Product.title, 2) }}
                             </th>
                             <td class="px-2 py-2">
-                                <span class="bg-primary-100 text-primary-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-primary-300">Desktop PC</span>
+                                <span class="bg-primary-100 text-primary-800
+                                 text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-primary-300">{{Product.category_id}}</span>
                             </td>
                             <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                 <div class="flex items-center">
                                     <div class="inline-block w-4 h-4 mr-2 bg-red-700 rounded-full"></div>
-                                    95
+                                    {{Product.inStock}}
                                 </div>
                             </td>
-                            <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">1.47</td>
-                            <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">0.47</td>
+                            <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{Product.brand_id}}</td>
+                            <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{Product.quantity}}</td>
                             <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                 <div class="flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-2 text-gray-400" aria-hidden="true">
-                                        <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" class="w-7 h-7 mr-2 text-emerald-600">
+                                        <path d="M10 2a.75.75 0 01.75.75V3c2.485 0 4.5 2.015 4.5 4.5 0 1.988-1.29 3.676-3.094 4.255A4.5 4.5 0 0110 17.25v.5a.75.75 0 01-1.5 0v-.5a4.5 4.5 0 01-4.156-4.746.75.75 0 011.5.12 3 3 0 002.656 3.126V9.75H7a.75.75 0 010-1.5h1.5V6.75H7a.75.75 0 010-1.5h1.5V2.75A.75.75 0 0110 2z" />
                                     </svg>
-                                    1.6M
+                                    {{Product.price}}
                                 </div>
                             </td>
-                            <td class="px-4 py-2">$3.2M</td>
-                            <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">Just now</td>
+                            <td class="px-4 py-2">{{Product.published}}</td>
                             <td class="px-4 py-3 flex items-center justify-end">
                                 <button id="apple-imac-27-dropdown-button" data-dropdown-toggle="apple-imac-27-dropdown" class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100" type="button">
                                     <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -149,7 +343,7 @@ function getFirstWords(text, count) {
                                             <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Show</a>
                                         </li>
                                         <li>
-                                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
+                                            <button @c.capture="openEditModal(product)" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</button>
                                         </li>
                                     </ul>
                                     <div class="py-1">
@@ -207,8 +401,6 @@ function getFirstWords(text, count) {
         </div>
         </div>
     </section>
-
-
 </template>
 
 <style scoped>

@@ -27,6 +27,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->name('dashboard');
     Route::get('/Product',[ProdectController::class,'index'])
         ->name('product.index');
+    Route::post('/Product',[ProdectController::class,'store'])
+        ->name('product.store');
 
 });
 
