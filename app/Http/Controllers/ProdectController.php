@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Product_images;
 use Illuminate\Http\Request;
@@ -13,79 +15,125 @@ class ProdectController extends Controller
 
     public function index()
     {
-        $Products=Product::all();
-        return Inertia::render('Admin/Product/index',['Products'=>$Products]);
+
+        $Products = Product::with('brand','category','product_images')->get();
+        $brands = Brand::all();
+        $categories = Category::all();
+        return Inertia::render('Admin/Product/index',
+            [
+                'Products'=>$Products,
+                'brands' => $brands,
+                'categories' => $categories
+            ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $product=new Product();
-        $product->title=$request->title;
-        $product->slug=$request->slug;
-        $product->description=$request->description;
-        $product->published=$request->published;
-        $product->inStock=$request->inStock;
-        $product->price=$request->price;
-        $product->save();
 
-        if($request->hasFile('product_images')){
+
+        $product = Product::create([
+            'title' => $request->title,
+            'slug' => $request->slug,
+            'description' => $request->description,
+            'published' => $request->published ?? 0,
+            'inStock' => $request->inStock ?? 0,
+            'price' => $request->price,
+            'quantity' => $request->quantity ?? 0,
+            'category_id' => $request->category_id,
+            'brand_id' => $request->brand_id,
+        ]);
+
+
+        //check if product has images upload
+
+        if ($request->hasFile('product_images')) {
             $productImages = $request->file('product_images');
-            foreach($productImages as $image){
-                $uniqueName = time().'_'.Str::random(10).'_'.$image->getClientOriginalName();
+            foreach ($productImages as $image) {
+                // Generate a unique name for the image using timestamp and random string
+                $uniqueName = time() . '-' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                // Store the image in the public folder with the unique name
                 $image->move('product_images', $uniqueName);
+                // Create a new product image record with the product_id and unique name
+                Product_images::create([
+                    'product_id' => $product->id,
+                    'image' => 'product_images/' . $uniqueName,
+                ]);
             }
-            Product_images::create([
-                'product_id'=>$product->id,
-                'image'=>'product_images/'.$uniqueName
-            ]);
-
         }
-        return redirect()->route('admin.products.index')
-            ->with('success','Product created successfully.');
 
+
+        return redirect()->route('admin.product.index')->with('success', 'Product created successfully.');
     }
 
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Prodect $prodect)
+    public function update(Request $request, $id)
     {
-        //
+        $product = Product::findOrFail($id);
+
+        $product->update([
+            'title' => $request->title,
+            'price' => $request->price,
+            'quantity' => $request->quantity,
+            'description' => $request->description,
+            'category_id' => $request->category_id,
+            'brand_id' => $request->brand_id,
+            'published' => $request->published ?? 0,
+            'inStock' => $request->inStock ?? 0,
+        ]);
+
+        $this->handleImages($request, $product->id);
+
+        return redirect()->route('admin.product.index')->with('success', 'Product updated successfully.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Prodect $prodect)
+    protected function handleImages(Request $request, $productId)
     {
-        //
+        if ($request->hasFile('product_images')) {
+            foreach ($request->file('product_images') as $image) {
+                $uniqueName = time() . '-' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                $image->move('product_images', $uniqueName);
+
+                Product_images::create([
+                    'product_id' => $productId,
+                    'image' => 'product_images/' . $uniqueName,
+                ]);
+            }
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Prodect $prodect)
+    public function deleteImage($id)
     {
-        //
+        $image = Product_images::findOrFail($id);
+        if (file_exists(public_path($image->image))) {
+            unlink(public_path($image->image));
+        }
+        $image->delete();
+
+        return redirect()->route('admin.product.index')->with('success', 'Image deleted successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Prodect $prodect)
+    public function destory($id)
     {
-        //
+        $product = Product::findOrFail($id);
+        foreach ($product->product_images as $image) {
+            if (file_exists(public_path($image->image))) {
+                unlink(public_path($image->image));
+            }
+            $image->delete();
+        }
+
+        $product->delete();
+
+        return redirect()->route('admin.product.index')->with('success', 'Product deleted successfully.');
     }
+
+    //update
+
+
+
+
+
 }

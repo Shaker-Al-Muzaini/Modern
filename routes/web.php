@@ -3,13 +3,13 @@
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProdectController;
+use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+//users
 
+Route::get('/',[UserController::class,'index'])->name('home');
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -29,6 +29,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->name('product.index');
     Route::post('/Product',[ProdectController::class,'store'])
         ->name('product.store');
+    Route::put('/products/update/{id}',[ProdectController::class,'update'])
+        ->name('admin.products.update');
+    Route::delete('/products/image/{id}',[ProdectController::class,'deleteImage'])
+        ->name('admin.products.image.delete');
+    Route::delete('/products/destory/{id}',[ProdectController::class,'destory'])
+        ->name('admin.products.destory');
 
 });
 
