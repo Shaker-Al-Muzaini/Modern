@@ -16,10 +16,7 @@ onMounted(()=>{
     <Header></Header>
     <!--man contant-->
 
-    <!--    har section-->
-    <Hero></Hero>
 
-    <!--    end-->
     <slot/>
     <!--end-->
     <!--    footer-->

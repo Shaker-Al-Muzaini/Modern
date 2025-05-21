@@ -1,11 +1,8 @@
-<script setup lang="ts">
-import { onMounted } from 'vue';
-import { initFlowbite } from 'flowbite';
+<script setup>
+import { Link, router } from '@inertiajs/vue3';
+import Products from '../User/Components/Products.vue'
+import Hero from '@/pages/User/LayoutU/Hero.vue';
 import UserLayout from '@/pages/User/LayoutU/UserLayout.vue';
-
-onMounted(()=>{
-     initFlowbite();
-})
 //products list
 defineProps({
     products: Array
@@ -13,38 +10,26 @@ defineProps({
 
 
 </script>
-
 <template>
-<UserLayout>
-    <div class="bg-white">
-        <div class="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
-            <h2 class="text-2xl font-bold tracking-tight text-gray-900">List Product </h2>
+    <UserLayout>
+        <!-- here section  -->
+        <Hero></Hero>
+        <!-- end -->
+        <div class="bg-white">
+            <div class="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
+                <h2 class="text-2xl font-bold tracking-tight text-gray-900">List of products</h2>
 
-            <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-                <div v-for="product in products" :key="product.id" class="group relative">
-                    <img v-if="product.product_images.length>0" :src="`/${product.product_images[0].image}`" :alt="product.imageAlt"
-                         class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:aspect-auto lg:h-80" />
-                    <img v-else src="https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg" :alt="product.imageAlt"
-                         class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:aspect-auto lg:h-80" />
-                    <div class="mt-4 flex justify-between">
-                        <div>
-                            <h3 class="text-sm text-gray-700">
-                                <a :href="product.href">
-                                    <span aria-hidden="true" class="absolute inset-0" />
-                                    {{ product.title }}
-                                </a>
-                            </h3>
-                            <p class="mt-1 text-sm text-gray-500">{{ product.brand.name }}</p>
-                        </div>
-                        <p class="text-sm font-medium text-gray-900">${{ product.price }}</p>
-                    </div>
+                <!-- product list component -->
+                <Products :products="products"></Products>
+                <!-- end -->
+                <div class="flex justify-center mt-5">
+                    <Link :href="route('products.index')"
+                          class="text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2">
+                        View All Products</Link>
                 </div>
+
+
             </div>
         </div>
-    </div>
-</UserLayout>
-
+    </UserLayout>
 </template>
-<style scoped>
-
-</style>
