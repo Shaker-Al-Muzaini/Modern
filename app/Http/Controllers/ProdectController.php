@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Product_images;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -13,24 +14,20 @@ use Inertia\Inertia;
 class ProdectController extends Controller
 {
 
+    protected $service;
+
+    public function __construct(ProductService $service)
+    {
+        $this->service = $service;
+    }
+
     public function index()
     {
-        $Products = Product::with([
-            'brand:id,name',
-            'category:id,name',
-            'product_images:id,product_id,image',
-        ])
-            ->select('id', 'title', 'brand_id','quantity', 'price','category_id', 'slug')
-            ->latest()
-            ->paginate(10);
-
-        $brands = Brand::select('id', 'name')->get();
-        $categories =Category::select('id','name')->get();
-
+        $data = $this->service->getIndexData();
         return Inertia::render('Admin/Product/index', [
-            'Products'=>$Products,
-            'brands' => $brands,
-            'categories' => $categories
+            'Products' => $data['Products'],
+            'brands' => $data['brands'],
+            'categories' => $data['categories'],
         ]);
     }
 
