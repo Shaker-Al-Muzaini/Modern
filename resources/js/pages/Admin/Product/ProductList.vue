@@ -6,9 +6,10 @@ import Swal from 'sweetalert2';
 
 
 
-defineProps({
-    Products: Array
+const { Products } = defineProps({
+    Products: Object
 })
+
 const brands = usePage().props.brands;
 const categories = usePage().props.categories;
 
@@ -540,7 +541,7 @@ const deleteProduct = (product, index) => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(product, index) in Products" :key="product.id" class="border-b dark:border-gray-700">
+                            <tr v-for="(product, index) in Products.data" :key="product.id" class="border-b dark:border-gray-700">
                                 <th scope="row" class="px-4 py-3 font-medium whitespace-nowrap text-gray-900 dark:text-white">
                                     {{ product.title }}
                                 </th>
@@ -624,25 +625,31 @@ const deleteProduct = (product, index) => {
                             </tr>
                         </tbody>
                     </table>
+
                 </div>
                 <nav
                     class="flex flex-col items-start justify-between space-y-3 p-4 md:flex-row md:items-center md:space-y-0"
                     aria-label="Table navigation"
                 >
+                    <!-- Showing X-Y of Z -->
                     <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
-                        Showing
-                        <span class="font-semibold text-gray-900 dark:text-white">1-10</span>
-                        of
-                        <span class="font-semibold text-gray-900 dark:text-white">1000</span>
-                    </span>
+      Showing
+      <span class="font-semibold text-gray-900 dark:text-white">{{ Products.from }}-{{ Products.to }}</span>
+      of
+      <span class="font-semibold text-gray-900 dark:text-white">{{ Products.total }}</span>
+    </span>
+
+                    <!-- Pagination buttons -->
                     <ul class="inline-flex items-stretch -space-x-px">
-                        <li>
+                        <!-- Previous -->
+                        <li v-if="Products.prev_page_url">
                             <a
                                 href="#"
+                                @click.prevent="$inertia.get(Products.prev_page_url)"
                                 class="ml-0 flex h-full items-center justify-center rounded-l-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
                             >
                                 <span class="sr-only">Previous</span>
-                                <svg class="h-5 w-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         fill-rule="evenodd"
                                         d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
@@ -651,49 +658,35 @@ const deleteProduct = (product, index) => {
                                 </svg>
                             </a>
                         </li>
-                        <li>
+
+                        <!-- Page numbers -->
+                        <li
+                            v-for="page in Products.last_page"
+                            :key="page"
+                        >
                             <a
                                 href="#"
-                                class="flex items-center justify-center border border-gray-300 bg-white px-3 py-2 text-sm leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                                >1</a
+                                @click.prevent="$inertia.get(`?page=${page}`)"
+                                :class="[
+            'flex items-center justify-center border px-3 py-2 text-sm leading-tight',
+            page === Products.current_page
+              ? 'z-10 text-white bg-blue-600 border-blue-600'
+              : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
+          ]"
                             >
+                                {{ page }}
+                            </a>
                         </li>
-                        <li>
+
+                        <!-- Next -->
+                        <li v-if="Products.next_page_url">
                             <a
                                 href="#"
-                                class="flex items-center justify-center border border-gray-300 bg-white px-3 py-2 text-sm leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                                >2</a
-                            >
-                        </li>
-                        <li>
-                            <a
-                                href="#"
-                                aria-current="page"
-                                class="text-primary-600 bg-primary-50 border-primary-300 hover:bg-primary-100 hover:text-primary-700 z-10 flex items-center justify-center border px-3 py-2 text-sm leading-tight dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-                                >3</a
-                            >
-                        </li>
-                        <li>
-                            <a
-                                href="#"
-                                class="flex items-center justify-center border border-gray-300 bg-white px-3 py-2 text-sm leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                                >...</a
-                            >
-                        </li>
-                        <li>
-                            <a
-                                href="#"
-                                class="flex items-center justify-center border border-gray-300 bg-white px-3 py-2 text-sm leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                                >100</a
-                            >
-                        </li>
-                        <li>
-                            <a
-                                href="#"
+                                @click.prevent="$inertia.get(Products.next_page_url)"
                                 class="flex h-full items-center justify-center rounded-r-lg border border-gray-300 bg-white px-3 py-1.5 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
                             >
                                 <span class="sr-only">Next</span>
-                                <svg class="h-5 w-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         fill-rule="evenodd"
                                         d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"

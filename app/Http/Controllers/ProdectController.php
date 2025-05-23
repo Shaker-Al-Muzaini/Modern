@@ -15,17 +15,25 @@ class ProdectController extends Controller
 
     public function index()
     {
+        $Products = Product::with([
+            'brand:id,name',
+            'category:id,name',
+            'product_images:id,product_id,image',
+        ])
+            ->select('id', 'title', 'brand_id','quantity', 'price','category_id', 'slug')
+            ->latest()
+            ->paginate(10);
 
-        $Products = Product::with('brand','category','product_images')->get();
-        $brands = Brand::all();
-        $categories = Category::all();
-        return Inertia::render('Admin/Product/index',
-            [
-                'Products'=>$Products,
-                'brands' => $brands,
-                'categories' => $categories
-            ]);
+        $brands = Brand::select('id', 'name')->get();
+        $categories =Category::select('id','name')->get();
+
+        return Inertia::render('Admin/Product/index', [
+            'Products'=>$Products,
+            'brands' => $brands,
+            'categories' => $categories
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
